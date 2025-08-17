@@ -28,7 +28,18 @@ export default async function handler(req, res) {
       const configsCollection = db.collection('panelConfigs');
 
       if (req.method === 'GET') {
-        const configs = await configsCollection.find({}).toArray();
+        const { type } = req.query;
+        let configs;
+        
+        if (type) {
+            // Ambil satu konfigurasi berdasarkan tipe
+            const config = await configsCollection.findOne({ type: type });
+            configs = config ? [config] : [];
+        } else {
+            // Jika tidak ada tipe, ambil semua konfigurasi
+            configs = await configsCollection.find({}).toArray();
+        }
+
         return res.status(200).json({ success: true, configs });
       }
 
