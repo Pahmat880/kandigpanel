@@ -1,0 +1,411 @@
+// dashboard.js
+
+document.addEventListener('DOMContentLoaded', async () => {
+    const token = localStorage.getItem('token');
+    const user = JSON.parse(localStorage.getItem('user'));
+    
+    if (!token || !user) {
+        window.location.href = '/login.html';
+        return;
+    }
+    
+    document.getElementById('usernameDisplay').textContent = user.username;
+    
+    if (user.role === 'admin') {
+        document.getElementById('adminDashboard').style.display = 'block';
+    } else {
+        document.getElementById('userDashboard').style.display = 'block';
+    }
+
+    document.getElementById('logoutButton').addEventListener('click', () => {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        window.location.href = '/login.html';
+    });
+    
+    const PACKAGES = {
+        "1gb": { ram: 1024, disk: 1024, cpu: 100, name: "1 GB" },
+        "2gb": { ram: 2048, disk: 2048, cpu: 100, name: "2 GB" },
+        "3gb": { ram: 3072, disk: 3072, cpu: 100, name: "3 GB" },
+        "4gb": { ram: 4096, disk: 4096, cpu: 100, name: "4 GB" },
+        "5gb": { ram: 5120, disk: 5120, cpu: 100, name: "5 GB" }
+    };
+
+    const API_ENDPOINTS = {
+        create: '/api/create-panel',
+        list: '/api/list-panels',
+        delete: '/api/delete-panel',
+        admin: {
+            users: '/api/admin/manage-users',
+            configs: '/api/admin/manage-configs',
+        }
+    };
+
+    function showToast(type, message, duration = 3000) {
+        const toast = document.createElement('div');
+        toast.classList.add('toast-notification', type);
+        let icon = '';
+        if (type === 'success') icon = '<i class="fas fa-check-circle"></i>';
+        else if (type === 'error') icon = '<i class="fas fa-times-circle"></i>';
+        else if (type === 'info') icon = '<i class="fas fa-info-circle"></i>';
+        toast.innerHTML = `
+            <span class="icon">${icon}</span>
+            <span class="message">${message}</span>
+            <button class="close-btn">&times;</button>
+        `;
+        toast.querySelector('.close-btn').addEventListener('click', () => toast.remove());
+        toastContainer.appendChild(toast);
+        setTimeout(() => toast.remove(), duration);
+    }
+    
+    async function callApi(endpoint, method, body = null) {
+        const headers = { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` };
+        const config = { method, headers };
+        if (body) {
+            config.body = JSON.stringify(body);
+        }
+        const response = await fetch(endpoint, config);
+        return response.json();
+    }
+
+    // --- Logika Dashboard User ---
+    const createPanelForm = document.getElementById('createPanelForm');
+    const panelTypeSelect = document.getElementById('panelType');
+    const usernameInput = document.getElementById('username');
+    const hostingPackageSelect = document.getElementById('hostingPackage');
+    const submitButton = document.getElementById('submitButton');
+    const buttonText = document.getElementById('buttonText');
+    const resultBox = document.getElementById('resultBox');
+    const listPanelsButton = document.getElementById('listPanelsButton');
+    const panelsListContainer = document.getElementById('panelsListContainer');
+    const panelsList = document.getElementById('panelsList');
+    const toastContainer = document.getElementById('toastContainer');
+    
+    if (user.role === 'user') {
+        function populatePanelTypeDropdown() {
+            panelTypeSelect.innerHTML = '<option value="" disabled selected>Pilih Tipe Panel</option>';
+            if (user.accountType === 'reguler') {
+                panelTypeSelect.innerHTML += `<option value="public">Public Panel</option>`;
+            } else if (user.accountType === 'premium') {
+                panelTypeSelect.innerHTML += `<option value="public">Public Panel</option>`;
+                panelTypeSelect.innerHTML += `<option value="private">Private Panel</option>`;
+            } else if (user.accountType === 'eksklusif') {
+                const types = ['public', 'private', 'eksklusif'];
+                types.forEach(type => {
+                    panelTypeSelect.innerHTML += `<option value="${type}">${type.charAt(0).toUpperCase() + type.slice(1)} Panel</option>`;
+                });
+            }
+        }
+        populatePanelTypeDropdown();
+
+        for (const key in PACKAGES) {
+            const option = document.createElement('option');
+            option.value = key;
+            option.textContent = PACKAGES[key].name;
+            hostingPackageSelect.appendChild(option);
+        }
+
+        createPanelForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            submitButton.disabled = true;
+            buttonText.textContent = 'Memproses...';
+            resultBox.style.display = 'none';
+
+            const selectedPackage = PACKAGES[hostingPackageSelect.value];
+            const panelType = panelTypeSelect.value;
+            const username = usernameInput.value;
+
+            try {
+                const url = `${API_ENDPOINTS.create}?username=${username}&ram=${selectedPackage.ram}&disk=${selectedPackage.disk}&cpu=${selectedPackage.cpu}&hostingPackage=${selectedPackage.name}&panelType=${panelType}`;
+                const response = await fetch(url, {
+                    method: 'GET',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await response.json();
+
+                if (response.ok && data.status) {
+                    resultBox.innerHTML = `
+                        <p><strong>Panel Berhasil Dibuat!</strong></p>
+                        <div class="result-detail"><span>Username:</span> <span id="resultUsername" class="result-value">${data.result.username}</span></div>
+                        <div class="result-detail"><span>Password:</span> <span id="resultPassword" class="result-value">${data.result.password}</span></div>
+                        <div class="result-detail"><span>Domain:</span> <span id="resultDomain" class="result-value">${data.result.domain}</span></div>
+                    `;
+                    resultBox.style.display = 'block';
+                    showToast('success', 'Panel berhasil dibuat!');
+                } else {
+                    showToast('error', data.message || 'Terjadi kesalahan saat membuat panel.');
+                    resultBox.style.display = 'none';
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showToast('error', 'Terjadi kesalahan jaringan.');
+                resultBox.style.display = 'none';
+            } finally {
+                submitButton.disabled = false;
+                buttonText.textContent = 'Buat Panel';
+            }
+        });
+
+        listPanelsButton.addEventListener('click', async () => {
+            listPanelsButton.disabled = true;
+            listPanelsButton.textContent = 'Memuat...';
+
+            try {
+                const response = await fetch(API_ENDPOINTS.list, {
+                    method: 'GET',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    panelsList.innerHTML = '';
+                    if (data.panels.length === 0) {
+                        panelsList.innerHTML = '<p class="no-panels">Anda belum memiliki panel.</p>';
+                    } else {
+                        data.panels.forEach(panel => {
+                            const panelItem = document.createElement('div');
+                            panelItem.classList.add('panel-item');
+                            panelItem.innerHTML = `
+                                <h3>${panel.username}</h3>
+                                <p><strong>Domain:</strong> <a href="${panel.domain}" target="_blank">${panel.domain}</a></p>
+                                <p><strong>ID Server:</strong> ${panel.idServer}</p>
+                                <p><strong>Tipe:</strong> ${panel.panelType.toUpperCase()}</p>
+                                <button class="delete-panel-button" data-id="${panel.idServer}">Hapus</button>
+                            `;
+                            panelsList.appendChild(panelItem);
+                        });
+                    }
+                    panelsListContainer.style.display = 'block';
+                    showToast('info', 'Daftar panel berhasil dimuat.');
+                } else {
+                    showToast('error', data.message || 'Gagal memuat daftar panel.');
+                    panelsListContainer.style.display = 'none';
+                }
+            } catch (error) {
+                console.error('List panels error:', error);
+                showToast('error', 'Terjadi kesalahan jaringan saat memuat panel.');
+                panelsListContainer.style.display = 'none';
+            } finally {
+                listPanelsButton.disabled = false;
+                listPanelsButton.textContent = 'Lihat Daftar Panel';
+            }
+        });
+
+        panelsList.addEventListener('click', async (event) => {
+            if (event.target.classList.contains('delete-panel-button')) {
+                const idServer = event.target.dataset.id;
+                if (confirm(`Apakah Anda yakin ingin menghapus panel dengan ID server ${idServer}?`)) {
+                    try {
+                        const response = await fetch(`${API_ENDPOINTS.delete}?idServer=${idServer}`, {
+                            method: 'GET',
+                            headers: { 'Authorization': `Bearer ${token}` }
+                        });
+                        const data = await response.json();
+
+                        if (response.ok && data.success) {
+                            showToast('success', 'Panel berhasil dihapus!');
+                            event.target.closest('.panel-item').remove();
+                        } else {
+                            showToast('error', data.message || 'Gagal menghapus panel.');
+                        }
+                    } catch (error) {
+                        console.error('Delete panel error:', error);
+                        showToast('error', 'Terjadi kesalahan jaringan saat menghapus panel.');
+                    }
+                }
+            }
+        });
+    }
+
+    // --- Logika Dashboard Admin ---
+    if (user.role === 'admin') {
+        const userManagementSection = document.getElementById('userManagementSection');
+        const configManagementSection = document.getElementById('configManagementSection');
+        const manageUsersButton = document.getElementById('manageUsersButton');
+        const manageConfigsButton = document.getElementById('manageConfigsButton');
+        const usersTableBody = document.getElementById('usersTableBody');
+        const configsTableBody = document.getElementById('configsTableBody');
+        const addUserFormContainer = document.getElementById('addUserFormContainer');
+        const addUserForm = document.getElementById('addUserForm');
+        const addUserButton = document.getElementById('addUserButton');
+        const cancelAddUserButton = document.getElementById('cancelAddUser');
+
+        function showSection(sectionId) {
+            userManagementSection.classList.add('hidden');
+            configManagementSection.classList.add('hidden');
+            document.getElementById(sectionId).classList.remove('hidden');
+        }
+
+        async function loadUsers() {
+            addUserFormContainer.classList.add('hidden');
+            try {
+                const data = await callApi(API_ENDPOINTS.admin.users, 'GET');
+                if (data.success) {
+                    usersTableBody.innerHTML = '';
+                    data.users.forEach(u => {
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `
+                            <td>${u.username}</td>
+                            <td>${u.role}</td>
+                            <td>${u.accountType}</td>
+                            <td>${u.lastLogin ? new Date(u.lastLogin).toLocaleString() : 'N/A'}</td>
+                            <td>
+                                <div class="action-buttons">
+                                    <button class="delete-user-button delete" data-id="${u._id}"><i class="fas fa-trash"></i> Hapus</button>
+                                </div>
+                            </td>
+                        `;
+                        usersTableBody.appendChild(tr);
+                    });
+                } else {
+                    showToast('error', data.message || 'Gagal memuat pengguna.');
+                }
+            } catch (error) {
+                console.error('Error loading users:', error);
+                showToast('error', 'Terjadi kesalahan jaringan.');
+            }
+        }
+
+        async function loadConfigs() {
+            try {
+                const data = await callApi(API_ENDPOINTS.admin.configs, 'GET');
+                if (data.success) {
+                    configsTableBody.innerHTML = '';
+                    data.configs.forEach(c => {
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `
+                            <td>${c.type}</td>
+                            <td>${c.domain}</td>
+                            <td><code>${c.ptla}</code></td>
+                            <td><code>${c.ptlc}</code></td>
+                            <td>${c.eggId}</td>
+                            <td>${c.nestId}</td>
+                            <td>${c.loc}</td>
+                            <td>
+                                <div class="action-buttons">
+                                    <button class="edit-config-button edit" data-type="${c.type}"><i class="fas fa-edit"></i> Edit</button>
+                                </div>
+                            </td>
+                        `;
+                        configsTableBody.appendChild(tr);
+                    });
+                } else {
+                    showToast('error', data.message || 'Gagal memuat konfigurasi.');
+                }
+            } catch (error) {
+                console.error('Error loading configs:', error);
+                showToast('error', 'Terjadi kesalahan jaringan.');
+            }
+        }
+
+        manageUsersButton.addEventListener('click', () => {
+            showSection('userManagementSection');
+            loadUsers();
+        });
+
+        manageConfigsButton.addEventListener('click', () => {
+            showSection('configManagementSection');
+            loadConfigs();
+        });
+
+        addUserButton.addEventListener('click', () => {
+            addUserFormContainer.classList.remove('hidden');
+        });
+        
+        cancelAddUserButton.addEventListener('click', () => {
+            addUserFormContainer.classList.add('hidden');
+            addUserForm.reset();
+        });
+
+        addUserForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const newUsername = document.getElementById('newUsername').value;
+            const newPassword = document.getElementById('newPassword').value;
+            const newUserRole = document.getElementById('newUserRole').value;
+            const newUserAccountType = document.getElementById('newUserAccountType').value;
+            
+            if (newUserRole === 'admin' && newUserAccountType !== 'admin') {
+                showToast('error', 'Akun admin harus memiliki tipe akun admin.');
+                return;
+            }
+            if (newUserRole === 'user' && newUserAccountType === 'admin') {
+                showToast('error', 'Tipe akun admin tidak bisa digunakan oleh role user.');
+                return;
+            }
+
+            const body = {
+                username: newUsername,
+                password: newPassword,
+                role: newUserRole,
+                accountType: newUserAccountType
+            };
+
+            try {
+                const data = await callApi(API_ENDPOINTS.admin.users, 'POST', body);
+                if (data.success) {
+                    showToast('success', 'Pengguna berhasil ditambahkan!');
+                    addUserFormContainer.classList.add('hidden');
+                    addUserForm.reset();
+                    loadUsers();
+                } else {
+                    showToast('error', data.message || 'Gagal menambahkan pengguna.');
+                }
+            } catch (error) {
+                showToast('error', 'Terjadi kesalahan jaringan.');
+            }
+        });
+
+        usersTableBody.addEventListener('click', async (e) => {
+            if (e.target.closest('button')?.classList.contains('delete-user-button')) {
+                const userId = e.target.closest('button').dataset.id;
+                if (confirm('Apakah Anda yakin ingin menghapus pengguna ini?')) {
+                    try {
+                        const data = await callApi(API_ENDPOINTS.admin.users, 'DELETE', { id: userId });
+                        if (data.success) {
+                            showToast('success', 'Pengguna berhasil dihapus!');
+                            loadUsers();
+                        } else {
+                            showToast('error', data.message || 'Gagal menghapus pengguna.');
+                        }
+                    } catch (error) {
+                        showToast('error', 'Terjadi kesalahan jaringan.');
+                    }
+                }
+            }
+        });
+        
+        configsTableBody.addEventListener('click', async (e) => {
+            if (e.target.closest('button')?.classList.contains('edit-config-button')) {
+                const configType = e.target.closest('button').dataset.type;
+                const newDomain = prompt(`Masukkan domain baru untuk ${configType}:`);
+                const newPtla = prompt(`Masukkan PTLA baru untuk ${configType}:`);
+                const newPtlc = prompt(`Masukkan PTLC baru untuk ${configType}:`);
+                const newEggId = prompt(`Masukkan Egg ID baru untuk ${configType}:`);
+                const newNestId = prompt(`Masukkan Nest ID baru untuk ${configType}:`);
+                const newLoc = prompt(`Masukkan Lokasi baru untuk ${configType}:`);
+
+                if (newDomain || newPtla || newPtlc || newEggId || newNestId || newLoc) {
+                    try {
+                        const data = await callApi(API_ENDPOINTS.admin.configs, 'PUT', { 
+                            type: configType,
+                            domain: newDomain,
+                            ptla: newPtla,
+                            ptlc: newPtlc,
+                            eggId: newEggId,
+                            nestId: newNestId,
+                            loc: newLoc,
+                        });
+                        if (data.success) {
+                            showToast('success', 'Konfigurasi berhasil diperbarui!');
+                            loadConfigs();
+                        } else {
+                            showToast('error', data.message || 'Gagal memperbarui konfigurasi.');
+                        }
+                    } catch (error) {
+                        showToast('error', 'Terjadi kesalahan jaringan.');
+                    }
+                }
+            }
+        });
+    }
+});
