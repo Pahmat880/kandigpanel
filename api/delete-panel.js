@@ -5,7 +5,7 @@ import { connectToDatabase } from '../utils/db.js';
 import jwt from 'jsonwebtoken';
 import { ObjectId } from 'mongodb';
 
-const JWT_SECRET = process.env.ENV_SECRET || 'your_very_secure_secret_key';
+const JWT_SECRET = process.env.JWT_SECRET || 'your_very_secure_secret_key';
 
 const DELETE_API_URL = 'https://restapi.mat.web.id/api/pterodactyl/delete';
 
