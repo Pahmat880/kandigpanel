@@ -24,7 +24,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     loginForm.addEventListener('submit', async (event) => {
-        event.preventDefault();
+        event.preventDefault(); // BARIS INI PENTING: MENGHENTIKAN PENGIRIMAN FORM BAWAAN
         
         loginButton.disabled = true;
         buttonText.textContent = 'Memproses...';
@@ -41,15 +41,13 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = await response.json();
 
             if (response.ok && data.success) {
-                // Simpan token dan data user di localStorage atau sessionStorage
                 localStorage.setItem('token', data.token);
                 localStorage.setItem('user', JSON.stringify(data.user));
                 
                 showToast('success', 'Login berhasil! Mengalihkan ke dashboard...');
                 
-                // Arahkan ke dashboard setelah jeda
                 setTimeout(() => {
-                    window.location.href = '/dashboard.html';
+                    window.location.href = '/dashboard';
                 }, 1500);
 
             } else {
