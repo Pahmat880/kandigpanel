@@ -137,24 +137,47 @@
 
             <section id="configManagementSection" class="hidden">
                 <h2 class="section-title">Konfigurasi Panel</h2>
-                <div class="table-container">
-                    <table id="configsTable">
-                        <thead>
-                            <tr>
-                                <th>Tipe</th>
-                                <th>Domain</th>
-                                <th>PTLA</th>
-                                <th>PTLC</th>
-                                <th>Egg ID</th>
-                                <th>Nest ID</th>
-                                <th>Lokasi</th>
-                                <th>Aksi</th>
-                            </tr>
-                        </thead>
-                        <tbody id="configsTableBody">
-                            </tbody>
-                    </table>
+                <div class="config-selection">
+                    <label for="configTypeSelect">Pilih Tipe Panel:</label>
+                    <select id="configTypeSelect">
+                        <option value="" disabled selected>Pilih Tipe</option>
+                        <option value="public">Public</option>
+                        <option value="private">Private</option>
+                        <option value="eksklusif">Eksklusif</option>
+                        <option value="admin">Admin</option>
+                    </select>
+                    <button id="loadConfigButton" class="submit-button small-button"><i class="fas fa-search"></i> Muat Data</button>
                 </div>
+                
+                <form id="editConfigForm" class="form-container hidden">
+                    <h3>Edit Konfigurasi (<span id="editConfigType"></span>)</h3>
+                    <div class="input-group">
+                        <label for="editDomain">Domain</label>
+                        <input type="text" id="editDomain">
+                    </div>
+                    <div class="input-group">
+                        <label for="editPtla">PTLA</label>
+                        <input type="password" id="editPtla">
+                    </div>
+                    <div class="input-group">
+                        <label for="editPtlc">PTLC</label>
+                        <input type="password" id="editPtlc">
+                    </div>
+                    <div class="input-group">
+                        <label for="editEggId">Egg ID</label>
+                        <input type="text" id="editEggId">
+                    </div>
+                    <div class="input-group">
+                        <label for="editNestId">Nest ID</label>
+                        <input type="text" id="editNestId">
+                    </div>
+                    <div class="input-group">
+                        <label for="editLoc">Lokasi</label>
+                        <input type="text" id="editLoc">
+                    </div>
+                    <button type="submit" class="submit-button"><i class="fas fa-save"></i> Simpan Perubahan</button>
+                    <button type="button" class="submit-button secondary-button" id="cancelEditConfig">Batal</button>
+                </form>
             </section>
         </div>
 
@@ -401,6 +424,18 @@
                 const addUserButton = document.getElementById('addUserButton');
                 const cancelAddUserButton = document.getElementById('cancelAddUser');
 
+                const configTypeSelect = document.getElementById('configTypeSelect');
+                const loadConfigButton = document.getElementById('loadConfigButton');
+                const editConfigForm = document.getElementById('editConfigForm');
+                const editConfigTypeSpan = document.getElementById('editConfigType');
+                const editDomainInput = document.getElementById('editDomain');
+                const editPtlaInput = document.getElementById('editPtla');
+                const editPtlcInput = document.getElementById('editPtlc');
+                const editEggIdInput = document.getElementById('editEggId');
+                const editNestIdInput = document.getElementById('editNestId');
+                const editLocInput = document.getElementById('editLoc');
+                const cancelEditConfigButton = document.getElementById('cancelEditConfig');
+
                 function showSection(sectionId) {
                     userManagementSection.classList.add('hidden');
                     configManagementSection.classList.add('hidden');
@@ -437,7 +472,8 @@
                     }
                 }
 
-                async function loadConfigs() {
+                async function loadConfigs(type = null) {
+                    editConfigForm.classList.add('hidden');
                     try {
                         const data = await callApi(API_ENDPOINTS.admin.configs, 'GET');
                         if (data.success) {
@@ -468,7 +504,7 @@
                         showToast('error', 'Terjadi kesalahan jaringan.');
                     }
                 }
-
+                
                 manageUsersButton.addEventListener('click', () => {
                     showSection('userManagementSection');
                     loadUsers();
