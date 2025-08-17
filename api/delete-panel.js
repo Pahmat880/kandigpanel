@@ -49,10 +49,8 @@ export default async function handler(req, res) {
       const userPanelsCollection = db.collection('userPanels');
       const panelConfigsCollection = db.collection('panelConfigs');
 
+      // VERIFIKASI DIBATALKAN: HANYA MENCARI BERDASARKAN IDSERVER
       const query = { idServer: idServer };
-      if (req.user.role !== 'admin') {
-        query.userId = req.user.id; // Membandingkan userId sebagai string
-      }
       
       console.log("Log Diagnostik: Query yang digunakan:", JSON.stringify(query));
       
@@ -60,7 +58,7 @@ export default async function handler(req, res) {
 
       if (!panelToDelete) {
         console.log("Log 3: Panel NOT FOUND in local database. Returning 404.");
-        return res.status(404).json({ success: false, message: 'Panel tidak ditemukan atau Anda tidak memiliki izin untuk menghapusnya.' });
+        return res.status(404).json({ success: false, message: 'Panel tidak ditemukan.' });
       }
       
       console.log("Log 4: Panel found in local database. Type:", panelToDelete.panelType);
@@ -99,4 +97,4 @@ export default async function handler(req, res) {
       res.status(500).json({ success: false, message: `Internal Server Error: ${error.message}` });
     }
   });
-}
+        }
