@@ -69,14 +69,18 @@ export default async function handler(req, res) {
       console.log("Log 3: Connected to database.");
 
       const userAccountType = req.user.accountType;
+      // Perbaikan di sini
       if (userAccountType === 'reguler' && panelType !== 'public') {
-        return res.status(403).json({ status: false, message: 'Akun Anda hanya diizinkan membuat panel public.' });
+        return res.status(403).json({ status: false, message: 'Akun reguler hanya diizinkan membuat panel public.' });
       }
-      if (userAccountType === 'premium' && (panelType !== 'public' && panelType !== 'private')) {
-        return res.status(403).json({ status: false, message: 'Akun premium tidak bisa membuat panel exclusive.' });
+      if (userAccountType === 'premium' && panelType !== 'private') {
+        return res.status(403).json({ status: false, message: 'Akun premium hanya diizinkan membuat panel private.' });
       }
       if (userAccountType === 'eksklusif' && (panelType !== 'public' && panelType !== 'private')) {
           return res.status(403).json({ status: false, message: 'Akun eksklusif hanya dapat membuat panel public dan private.' });
+      }
+      if (userAccountType === 'admin' && panelType !== 'admin') {
+          return res.status(403).json({ status: false, message: 'Akun admin hanya dapat membuat panel admin.' });
       }
 
       console.log("Log 4: User account type validated.");
