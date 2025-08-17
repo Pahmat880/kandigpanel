@@ -23,10 +23,16 @@ function escapeHTML(str) {
 
 function authenticateToken(req, res, next) {
   const token = req.headers['authorization']?.split(' ')[1];
-  if (!token) return res.status(401).json({ status: false, message: 'Access Denied: No token provided.' });
+  if (!token) {
+    console.log("Error: No token provided.");
+    return res.status(401).json({ status: false, message: 'Access Denied: No token provided.' });
+  }
 
   jwt.verify(token, JWT_SECRET, (err, user) => {
-    if (err) return res.status(403).json({ status: false, message: 'Access Denied: Invalid token.' });
+    if (err) {
+      console.log("Error: Invalid token.", err);
+      return res.status(403).json({ status: false, message: 'Access Denied: Invalid token.' });
+    }
     req.user = user;
     next();
   });
@@ -35,6 +41,8 @@ function authenticateToken(req, res, next) {
 export default async function handler(req, res) {
   await authenticateToken(req, res, async () => {
     if (!req.user) return;
+    
+    console.log("Log 1: Authentication successful. User role:", req.user.role);
 
     if (req.method !== 'GET') {
       return res.status(405).json({ status: false, message: 'Method Not Allowed.' });
@@ -43,8 +51,11 @@ export default async function handler(req, res) {
     const { username, ram, disk, cpu, hostingPackage, panelType } = req.query;
 
     if (!username || !ram || !disk || !cpu || !hostingPackage || !panelType) {
+      console.log("Error: Missing required parameters.");
       return res.status(400).json({ status: false, message: 'Missing required parameters.' });
     }
+    
+    console.log("Log 2: Parameters received. Panel Type:", panelType);
 
     if (req.user.role !== 'user') {
       return res.status(403).json({ status: false, message: 'Forbidden. Only users can create panels.' });
@@ -54,9 +65,10 @@ export default async function handler(req, res) {
       const db = await connectToDatabase();
       const userPanelsCollection = db.collection('userPanels');
       const panelConfigsCollection = db.collection('panelConfigs');
+      
+      console.log("Log 3: Connected to database.");
 
       const userAccountType = req.user.accountType;
-      // Perbarui logika validasi izin berdasarkan accountType
       if (userAccountType === 'reguler' && panelType !== 'public') {
         return res.status(403).json({ status: false, message: 'Akun Anda hanya diizinkan membuat panel public.' });
       }
@@ -67,14 +79,22 @@ export default async function handler(req, res) {
           return res.status(403).json({ status: false, message: 'Akun eksklusif hanya dapat membuat panel public dan private.' });
       }
 
+      console.log("Log 4: User account type validated.");
+
       const config = await panelConfigsCollection.findOne({ type: panelType });
       if (!config) {
+        console.log("Error: Panel configuration not found for type", panelType);
         return res.status(404).json({ status: false, message: `Panel type '${panelType}' not found in configs.` });
       }
+      
+      console.log("Log 5: Found configuration:", config.type);
 
       const API_URL = 'https://restapi.mat.web.id/api/pterodactyl/create';
       const apiResponse = await fetch(`${API_URL}?username=${encodeURIComponent(username)}&ram=${encodeURIComponent(ram)}&disk=${encodeURIComponent(disk)}&cpu=${encodeURIComponent(cpu)}&egg=${encodeURIComponent(config.eggId)}&nest=${encodeURIComponent(config.nestId)}&loc=${encodeURIComponent(config.loc)}&domain=${encodeURIComponent(config.domain)}&ptla=${encodeURIComponent(config.ptla)}&ptlc=${encodeURIComponent(config.ptlc)}`);
+      
+      console.log("Log 6: Pterodactyl API call sent. Status:", apiResponse.status);
       const apiData = await apiResponse.json();
+      console.log("Log 7: Pterodactyl API response:", apiData);
 
       if (apiResponse.ok && apiData.status) {
         await userPanelsCollection.insertOne({
@@ -87,6 +107,8 @@ export default async function handler(req, res) {
           createdAt: new Date()
         });
         
+        console.log("Log 8: Panel details saved to database.");
+
         const escapedUsername = escapeHTML(apiData.result.username);
         const escapedPassword = escapeHTML(apiData.result.password);
         const escapedDomain = escapeHTML(apiData.result.domain);
@@ -112,13 +134,14 @@ Server ID: ${apiData.result.id_server}
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ message: notificationMessage }),
         });
+        console.log("Log 9: Telegram notification sent.");
 
         res.status(200).json(apiData);
       } else {
         res.status(apiResponse.status || 500).json(apiData || { status: false, message: 'Failed to create server via external API.' });
       }
     } catch (error) {
-      console.error('Error in Vercel Serverless Function:', error);
+      console.error('Log 10: CRITICAL Error in Vercel Serverless Function:', error);
       res.status(500).json({ status: false, message: `Internal Server Error: ${error.message}` });
     }
   });
