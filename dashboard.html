@@ -279,14 +279,13 @@
                     panelTypeSelect.innerHTML = '<option value="" disabled selected>Pilih Tipe Panel</option>';
                     if (user.accountType === 'reguler') {
                         panelTypeSelect.innerHTML += `<option value="public">Public Panel</option>`;
-                    } else if (user.accountType === 'premium') {
+                    } else if (user.accountType === 'premium' || user.accountType === 'eksklusif') {
                         panelTypeSelect.innerHTML += `<option value="public">Public Panel</option>`;
                         panelTypeSelect.innerHTML += `<option value="private">Private Panel</option>`;
-                    } else if (user.accountType === 'eksklusif') {
-                        const types = ['public', 'private', 'eksklusif'];
-                        types.forEach(type => {
-                            panelTypeSelect.innerHTML += `<option value="${type}">${type.charAt(0).toUpperCase() + type.slice(1)} Panel</option>`;
-                        });
+                    } else if (user.accountType === 'admin') {
+                         panelTypeSelect.innerHTML += `<option value="public">Public Panel</option>`;
+                         panelTypeSelect.innerHTML += `<option value="private">Private Panel</option>`;
+                         panelTypeSelect.innerHTML += `<option value="admin">Admin Panel</option>`;
                     }
                 }
                 populatePanelTypeDropdown();
@@ -477,6 +476,7 @@
                         const data = await callApi(API_ENDPOINTS.admin.configs, 'GET');
                         if (data.success) {
                             configsTableBody.innerHTML = '';
+                            // Tampilkan semua konfigurasi dalam tabel
                             data.configs.forEach(c => {
                                 const tr = document.createElement('tr');
                                 tr.innerHTML = `
@@ -512,7 +512,68 @@
 
                 manageConfigsButton.addEventListener('click', () => {
                     showSection('configManagementSection');
+                    // Muat semua konfigurasi saat pertama kali masuk ke section
                     loadConfigs();
+                });
+
+                // Event listener untuk memuat konfigurasi tertentu
+                loadConfigButton.addEventListener('click', async () => {
+                    const selectedType = configTypeSelect.value;
+                    if (selectedType) {
+                        // Panggil API untuk mendapatkan konfigurasi spesifik
+                        try {
+                            const data = await callApi(`${API_ENDPOINTS.admin.configs}?type=${selectedType}`, 'GET');
+                            if (data.success && data.configs.length > 0) {
+                                const config = data.configs[0];
+                                editConfigTypeSpan.textContent = config.type;
+                                editDomainInput.value = config.domain || '';
+                                editPtlaInput.value = config.ptla || '';
+                                editPtlcInput.value = config.ptlc || '';
+                                editEggIdInput.value = config.eggId || '';
+                                editNestIdInput.value = config.nestId || '';
+                                editLocInput.value = config.loc || '';
+                                editConfigForm.classList.remove('hidden');
+                            } else {
+                                showToast('error', 'Konfigurasi tidak ditemukan. Silakan tambahkan terlebih dahulu.');
+                                editConfigForm.classList.add('hidden');
+                            }
+                        } catch (error) {
+                            showToast('error', 'Gagal memuat data konfigurasi.');
+                        }
+                    } else {
+                        showToast('error', 'Silakan pilih tipe panel yang ingin diedit.');
+                    }
+                });
+                
+                cancelEditConfigButton.addEventListener('click', () => {
+                    editConfigForm.classList.add('hidden');
+                });
+
+                editConfigForm.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    const configType = editConfigTypeSpan.textContent;
+                    const body = {
+                        type: configType,
+                        domain: editDomainInput.value,
+                        ptla: editPtlaInput.value,
+                        ptlc: editPtlcInput.value,
+                        eggId: editEggIdInput.value,
+                        nestId: editNestIdInput.value,
+                        loc: editLocInput.value,
+                    };
+                    
+                    try {
+                        const data = await callApi(API_ENDPOINTS.admin.configs, 'PUT', body);
+                        if (data.success) {
+                            showToast('success', 'Konfigurasi berhasil diperbarui!');
+                            editConfigForm.classList.add('hidden');
+                            loadConfigs(); // Muat ulang tabel setelah update
+                        } else {
+                            showToast('error', data.message || 'Gagal memperbarui konfigurasi.');
+                        }
+                    } catch (error) {
+                        showToast('error', 'Terjadi kesalahan jaringan.');
+                    }
                 });
 
                 addUserButton.addEventListener('click', () => {
@@ -578,66 +639,6 @@
                                 showToast('error', 'Terjadi kesalahan jaringan.');
                             }
                         }
-                    }
-                });
-                
-                // Event listener untuk memuat konfigurasi tertentu
-                loadConfigButton.addEventListener('click', async () => {
-                    const selectedType = configTypeSelect.value;
-                    if (selectedType) {
-                        // Panggil API untuk mendapatkan konfigurasi spesifik
-                        try {
-                            const data = await callApi(`${API_ENDPOINTS.admin.configs}?type=${selectedType}`, 'GET');
-                            if (data.success && data.configs.length > 0) {
-                                const config = data.configs[0];
-                                editConfigTypeSpan.textContent = config.type;
-                                editDomainInput.value = config.domain || '';
-                                editPtlaInput.value = config.ptla || '';
-                                editPtlcInput.value = config.ptlc || '';
-                                editEggIdInput.value = config.eggId || '';
-                                editNestIdInput.value = config.nestId || '';
-                                editLocInput.value = config.loc || '';
-                                editConfigForm.classList.remove('hidden');
-                            } else {
-                                showToast('error', 'Konfigurasi tidak ditemukan. Silakan tambahkan terlebih dahulu.');
-                                editConfigForm.classList.add('hidden');
-                            }
-                        } catch (error) {
-                            showToast('error', 'Gagal memuat data konfigurasi.');
-                        }
-                    } else {
-                        showToast('error', 'Silakan pilih tipe panel yang ingin diedit.');
-                    }
-                });
-                
-                cancelEditConfigButton.addEventListener('click', () => {
-                    editConfigForm.classList.add('hidden');
-                });
-
-                editConfigForm.addEventListener('submit', async (e) => {
-                    e.preventDefault();
-                    const configType = editConfigTypeSpan.textContent;
-                    const body = {
-                        type: configType,
-                        domain: editDomainInput.value,
-                        ptla: editPtlaInput.value,
-                        ptlc: editPtlcInput.value,
-                        eggId: editEggIdInput.value,
-                        nestId: editNestIdInput.value,
-                        loc: editLocInput.value,
-                    };
-                    
-                    try {
-                        const data = await callApi(API_ENDPOINTS.admin.configs, 'PUT', body);
-                        if (data.success) {
-                            showToast('success', 'Konfigurasi berhasil diperbarui!');
-                            editConfigForm.classList.add('hidden');
-                            loadConfigs(); // Muat ulang tabel setelah update
-                        } else {
-                            showToast('error', data.message || 'Gagal memperbarui konfigurasi.');
-                        }
-                    } catch (error) {
-                        showToast('error', 'Terjadi kesalahan jaringan.');
                     }
                 });
             }
