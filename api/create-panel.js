@@ -92,14 +92,13 @@ export default async function handler(req, res) {
 
       const API_URL = 'https://restapi.mat.web.id/api/pterodactyl/create';
       
-      // Menggunakan URLSearchParams untuk memastikan parameter terisi dengan benar
       const params = new URLSearchParams({
         username: username,
         ram: ram,
         disk: disk,
         cpu: cpu,
-        eggid: config.eggId, // Menggunakan eggid sesuai format link
-        nestid: config.nestId, // Menggunakan nestid sesuai format link
+        eggid: config.eggId,
+        nestid: config.nestId,
         loc: config.loc,
         domain: config.domain,
         ptla: config.ptla,
@@ -117,7 +116,7 @@ export default async function handler(req, res) {
 
       if (apiResponse.ok && apiData.status) {
         await userPanelsCollection.insertOne({
-          userId: new ObjectId(req.user.id),
+          userId: req.user.id, // Menyimpan userId sebagai string
           idServer: apiData.result.id_server,
           idUser: apiData.result.id_user,
           username: apiData.result.username,
