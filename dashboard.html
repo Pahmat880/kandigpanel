@@ -137,14 +137,13 @@
 
             <section id="configManagementSection" class="hidden">
                 <h2 class="section-title">Konfigurasi Panel</h2>
+                
                 <div class="config-selection">
                     <label for="configTypeSelect">Pilih Tipe Panel:</label>
                     <select id="configTypeSelect">
                         <option value="" disabled selected>Pilih Tipe</option>
                         <option value="public">Public</option>
                         <option value="private">Private</option>
-                        <option value="eksklusif">Eksklusif</option>
-                        <option value="admin">Admin</option>
                     </select>
                     <button id="loadConfigButton" class="submit-button small-button"><i class="fas fa-search"></i> Muat Data</button>
                 </div>
@@ -281,13 +280,10 @@
                     if (user.accountType === 'reguler') {
                         panelTypeSelect.innerHTML += `<option value="public">Public Panel</option>`;
                     } else if (user.accountType === 'premium') {
-                        panelTypeSelect.innerHTML += `<option value="public">Public Panel</option>`;
                         panelTypeSelect.innerHTML += `<option value="private">Private Panel</option>`;
                     } else if (user.accountType === 'eksklusif') {
-                        const types = ['public', 'private', 'eksklusif'];
-                        types.forEach(type => {
-                            panelTypeSelect.innerHTML += `<option value="${type}">${type.charAt(0).toUpperCase() + type.slice(1)} Panel</option>`;
-                        });
+                        panelTypeSelect.innerHTML += `<option value="public">Public Panel</option>`;
+                        panelTypeSelect.innerHTML += `<option value="private">Private Panel</option>`;
                     }
                 }
                 populatePanelTypeDropdown();
@@ -475,7 +471,8 @@
                 async function loadConfigs(type = null) {
                     editConfigForm.classList.add('hidden');
                     try {
-                        const data = await callApi(API_ENDPOINTS.admin.configs, 'GET');
+                        const url = type ? `${API_ENDPOINTS.admin.configs}?type=${type}` : API_ENDPOINTS.admin.configs;
+                        const data = await callApi(url, 'GET');
                         if (data.success) {
                             configsTableBody.innerHTML = '';
                             data.configs.forEach(c => {
