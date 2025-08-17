@@ -44,14 +44,15 @@ export default async function handler(req, res) {
     
     console.log("Log 1: Authentication successful. User role:", req.user.role);
 
-    if (req.method !== 'GET') {
+    // Sekarang menerima POST
+    if (req.method !== 'POST') {
       return res.status(405).json({ status: false, message: 'Method Not Allowed.' });
     }
 
-    const { username, ram, disk, cpu, hostingPackage, panelType } = req.query;
+    const { username, ram, disk, cpu, hostingPackage, panelType } = req.body;
 
     if (!username || !ram || !disk || !cpu || !hostingPackage || !panelType) {
-      console.log("Error: Missing required parameters.");
+      console.log("Error: Missing required parameters in POST body.");
       return res.status(400).json({ status: false, message: 'Missing required parameters.' });
     }
     
@@ -69,7 +70,6 @@ export default async function handler(req, res) {
       console.log("Log 3: Connected to database.");
 
       const userAccountType = req.user.accountType;
-      // Perbaiki logika validasi peran
       if (userAccountType === 'reguler' && panelType !== 'public') {
         return res.status(403).json({ status: false, message: 'Akun reguler hanya diizinkan membuat panel public.' });
       }
@@ -92,8 +92,7 @@ export default async function handler(req, res) {
 
       const API_URL = 'https://restapi.mat.web.id/api/pterodactyl/create';
       
-      // Menggunakan URLSearchParams untuk memastikan parameter terisi dengan benar
-      const params = new URLSearchParams({
+      const requestBody = {
         username: username,
         ram: ram,
         disk: disk,
@@ -104,16 +103,17 @@ export default async function handler(req, res) {
         domain: config.domain,
         ptla: config.ptla,
         ptlc: config.ptlc
+      };
+
+      const apiResponse = await fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(requestBody)
       });
-
-      const finalUrl = `${API_URL}?${params.toString()}`;
-      console.log("Log 6: Final URL for Pterodactyl API call:", finalUrl);
-
-      const apiResponse = await fetch(finalUrl);
       
-      console.log("Log 7: Pterodactyl API call sent. Status:", apiResponse.status);
+      console.log("Log 6: Pterodactyl API call sent. Status:", apiResponse.status);
       const apiData = await apiResponse.json();
-      console.log("Log 8: Pterodactyl API response:", apiData);
+      console.log("Log 7: Pterodactyl API response:", apiData);
 
       if (apiResponse.ok && apiData.status) {
         await userPanelsCollection.insertOne({
@@ -126,7 +126,7 @@ export default async function handler(req, res) {
           createdAt: new Date()
         });
         
-        console.log("Log 9: Panel details saved to database.");
+        console.log("Log 8: Panel details saved to database.");
 
         const escapedUsername = escapeHTML(apiData.result.username);
         const escapedPassword = escapeHTML(apiData.result.password);
@@ -153,14 +153,14 @@ Server ID: ${apiData.result.id_server}
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ message: notificationMessage }),
         });
-        console.log("Log 10: Telegram notification sent.");
+        console.log("Log 9: Telegram notification sent.");
 
         res.status(200).json(apiData);
       } else {
         res.status(apiResponse.status || 500).json(apiData || { status: false, message: 'Failed to create server via external API.' });
       }
     } catch (error) {
-      console.error('Log 11: CRITICAL Error in Vercel Serverless Function:', error);
+      console.error('Log 10: CRITICAL Error in Vercel Serverless Function:', error);
       res.status(500).json({ status: false, message: `Internal Server Error: ${error.message}` });
     }
   });
