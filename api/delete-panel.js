@@ -51,7 +51,7 @@ export default async function handler(req, res) {
 
       const query = { idServer: idServer };
       if (req.user.role !== 'admin') {
-        query.userId = new ObjectId(req.user.id);
+        query.userId = req.user.id; // Membandingkan userId sebagai string
       }
       
       console.log("Log Diagnostik: Query yang digunakan:", JSON.stringify(query));
