@@ -24,23 +24,36 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     loginForm.addEventListener('submit', async (event) => {
-        event.preventDefault(); // BARIS INI PENTING: MENGHENTIKAN PENGIRIMAN FORM BAWAAN
+        event.preventDefault();
         
         loginButton.disabled = true;
         buttonText.textContent = 'Memproses...';
 
         const username = document.getElementById('username').value;
         const password = document.getElementById('password').value;
-
+        
+        console.log("Mencoba login...");
+        console.log("Username:", username);
+        
         try {
-            const response = await fetch('/api/auth/login', {
+            const apiEndpoint = `${window.location.origin}/api/auth/login`;
+            console.log("Mengirim permintaan ke:", apiEndpoint);
+            
+            const response = await fetch(apiEndpoint, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ username, password }),
             });
+            
+            if (!response.ok) {
+                const errorData = await response.json();
+                showToast('error', errorData.message || `Login gagal dengan status: ${response.status}`);
+                return;
+            }
+            
             const data = await response.json();
 
-            if (response.ok && data.success) {
+            if (data.success) {
                 localStorage.setItem('token', data.token);
                 localStorage.setItem('user', JSON.stringify(data.user));
                 
@@ -55,7 +68,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         } catch (error) {
             console.error('Login error:', error);
-            showToast('error', 'Terjadi kesalahan jaringan.');
+            showToast('error', `Terjadi kesalahan jaringan: ${error.message}`);
         } finally {
             loginButton.disabled = false;
             buttonText.textContent = 'Login';
