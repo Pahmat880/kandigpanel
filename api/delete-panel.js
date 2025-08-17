@@ -54,7 +54,6 @@ export default async function handler(req, res) {
         query.userId = new ObjectId(req.user.id);
       }
       
-      // LOG DIAGNOSTIK BARU: Tampilkan objek query yang akan digunakan
       console.log("Log Diagnostik: Query yang digunakan:", JSON.stringify(query));
       
       const panelToDelete = await userPanelsCollection.findOne(query);
