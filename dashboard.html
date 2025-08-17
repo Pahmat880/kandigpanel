@@ -279,13 +279,11 @@
                     panelTypeSelect.innerHTML = '<option value="" disabled selected>Pilih Tipe Panel</option>';
                     if (user.accountType === 'reguler') {
                         panelTypeSelect.innerHTML += `<option value="public">Public Panel</option>`;
-                    } else if (user.accountType === 'premium' || user.accountType === 'eksklusif') {
+                    } else if (user.accountType === 'premium') {
+                        panelTypeSelect.innerHTML += `<option value="private">Private Panel</option>`;
+                    } else if (user.accountType === 'eksklusif') {
                         panelTypeSelect.innerHTML += `<option value="public">Public Panel</option>`;
                         panelTypeSelect.innerHTML += `<option value="private">Private Panel</option>`;
-                    } else if (user.accountType === 'admin') {
-                         panelTypeSelect.innerHTML += `<option value="public">Public Panel</option>`;
-                         panelTypeSelect.innerHTML += `<option value="private">Private Panel</option>`;
-                         panelTypeSelect.innerHTML += `<option value="admin">Admin Panel</option>`;
                     }
                 }
                 populatePanelTypeDropdown();
@@ -476,7 +474,6 @@
                         const data = await callApi(API_ENDPOINTS.admin.configs, 'GET');
                         if (data.success) {
                             configsTableBody.innerHTML = '';
-                            // Tampilkan semua konfigurasi dalam tabel
                             data.configs.forEach(c => {
                                 const tr = document.createElement('tr');
                                 tr.innerHTML = `
