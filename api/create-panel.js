@@ -1,7 +1,7 @@
 // api/create-panel.js
 
 import fetch from 'node-fetch'; 
-import { connectToDatabase } from '../../utils/db.js';
+import { connectToDatabase } from '../utils/db.js';
 import jwt from 'jsonwebtoken';
 import { ObjectId } from 'mongodb';
 
