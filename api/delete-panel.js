@@ -5,7 +5,7 @@ import { connectToDatabase } from '../utils/db.js';
 import jwt from 'jsonwebtoken';
 import { ObjectId } from 'mongodb';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your_very_secure_secret_key';
+const JWT_SECRET = process.env.ENV_SECRET || 'your_very_secure_secret_key';
 
 const DELETE_API_URL = 'https://restapi.mat.web.id/api/pterodactyl/delete';
 
@@ -49,11 +49,14 @@ export default async function handler(req, res) {
       const userPanelsCollection = db.collection('userPanels');
       const panelConfigsCollection = db.collection('panelConfigs');
 
-      // Cari panel yang akan dihapus di database lokal
       const query = { idServer: idServer };
       if (req.user.role !== 'admin') {
         query.userId = new ObjectId(req.user.id);
       }
+      
+      // LOG DIAGNOSTIK BARU: Tampilkan objek query yang akan digunakan
+      console.log("Log Diagnostik: Query yang digunakan:", JSON.stringify(query));
+      
       const panelToDelete = await userPanelsCollection.findOne(query);
 
       if (!panelToDelete) {
@@ -63,7 +66,6 @@ export default async function handler(req, res) {
       
       console.log("Log 4: Panel found in local database. Type:", panelToDelete.panelType);
 
-      // Ambil konfigurasi yang benar dari database
       const config = await panelConfigsCollection.findOne({ type: panelToDelete.panelType });
       if (!config) {
         console.log("Log 5: Panel configuration NOT FOUND. Returning 404.");
@@ -72,7 +74,6 @@ export default async function handler(req, res) {
       
       console.log("Log 6: Configuration found. Domain:", config.domain);
 
-      // Panggil API eksternal untuk menghapus panel
       const finalDeleteUrl = `${DELETE_API_URL}?idserver=${encodeURIComponent(idServer)}&domain=${encodeURIComponent(config.domain)}&ptla=${encodeURIComponent(config.ptla)}`;
       console.log("Log 7: Calling external API:", finalDeleteUrl);
       
@@ -80,7 +81,6 @@ export default async function handler(req, res) {
       console.log("Log 8: External API response status:", deleteResponse.status);
 
       if (deleteResponse.status === 200) {
-        // Jika berhasil dihapus di API eksternal, hapus juga dari database lokal
         const deleteResult = await userPanelsCollection.deleteOne({ _id: panelToDelete._id });
         if (deleteResult.deletedCount === 1) {
             console.log("Log 9: Panel deleted from local database.");
