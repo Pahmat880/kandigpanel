@@ -3,7 +3,6 @@
 import fetch from 'node-fetch'; 
 import { connectToDatabase } from '../utils/db.js';
 import jwt from 'jsonwebtoken';
-import { ObjectId } from 'mongodb';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your_very_secure_secret_key';
 const VERCEL_BASE_URL = process.env.VERCEL_BASE_URL;
@@ -69,7 +68,7 @@ export default async function handler(req, res) {
       console.log("Log 3: Connected to database.");
 
       const userAccountType = req.user.accountType;
-      // Perbaiki logika validasi peran
+      // Logika validasi peran
       if (userAccountType === 'reguler' && panelType !== 'public') {
         return res.status(403).json({ status: false, message: 'Akun reguler hanya diizinkan membuat panel public.' });
       }
@@ -116,8 +115,8 @@ export default async function handler(req, res) {
 
       if (apiResponse.ok && apiData.status) {
         await userPanelsCollection.insertOne({
-          userId: req.user.id, // Menyimpan userId sebagai string
-          idServer: apiData.result.id_server,
+          accountId: req.user.id, // Menyimpan accountId pengguna
+          idServer: apiData.result.id_server.toString(), 
           idUser: apiData.result.id_user,
           username: apiData.result.username,
           domain: apiData.result.domain,
