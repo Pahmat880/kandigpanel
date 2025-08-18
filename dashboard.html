@@ -114,6 +114,8 @@
                         <button type="button" class="submit-button secondary-button" id="cancelAddUser">Batal</button>
                     </form>
                 </div>
+                <div class="user-result-box" id="userResultBox" style="display: none;">
+                    </div>
                 <div class="table-container">
                     <table id="usersTable">
                         <thead>
@@ -439,6 +441,7 @@
                 const addUserForm = document.getElementById('addUserForm');
                 const addUserButton = document.getElementById('addUserButton');
                 const cancelAddUserButton = document.getElementById('cancelAddUser');
+                const userResultBox = document.getElementById('userResultBox');
 
                 const configTypeSelect = document.getElementById('configTypeSelect');
                 const loadConfigButton = document.getElementById('loadConfigButton');
@@ -452,29 +455,6 @@
                 const editLocInput = document.getElementById('editLoc');
                 const cancelEditConfigButton = document.getElementById('cancelEditConfig');
 
-                // Modal
-                const userResultModal = document.getElementById('userResultModal');
-                const closeModalButtons = document.querySelectorAll('.close-modal');
-                const copyDetailsButton = document.querySelector('.copy-details-button');
-                
-                closeModalButtons.forEach(button => {
-                    button.addEventListener('click', () => {
-                        userResultModal.classList.add('hidden');
-                    });
-                });
-                copyDetailsButton.addEventListener('click', async () => {
-                    const modalUsername = document.getElementById('modalUsername').textContent;
-                    const modalPassword = document.getElementById('modalPassword').textContent;
-                    const modalAccountType = document.getElementById('modalAccountType').textContent;
-                    const textToCopy = `Username: ${modalUsername}\nPassword: ${modalPassword}\nAccount Type: ${modalAccountType}`;
-                    try {
-                        await navigator.clipboard.writeText(textToCopy);
-                        showToast('info', 'Detail akun berhasil disalin!');
-                    } catch (err) {
-                        showToast('error', 'Gagal menyalin detail akun!');
-                    }
-                });
-
                 function showSection(sectionId) {
                     userManagementSection.classList.add('hidden');
                     configManagementSection.classList.add('hidden');
@@ -482,6 +462,7 @@
                 }
 
                 async function loadUsers() {
+                    userResultBox.style.display = 'none';
                     addUserFormContainer.classList.add('hidden');
                     try {
                         const data = await callApi(API_ENDPOINTS.admin.users, 'GET');
@@ -557,11 +538,12 @@
                 });
 
                 // Event listener untuk memuat konfigurasi tertentu
-                configsTableBody.addEventListener('click', async (e) => {
-                    if (e.target.closest('button')?.classList.contains('edit-config-button')) {
-                        const configType = e.target.closest('button').dataset.type;
+                loadConfigButton.addEventListener('click', async () => {
+                    const selectedType = configTypeSelect.value;
+                    if (selectedType) {
+                        // Panggil API untuk mendapatkan konfigurasi spesifik
                         try {
-                            const data = await callApi(`${API_ENDPOINTS.admin.configs}?type=${configType}`, 'GET');
+                            const data = await callApi(`${API_ENDPOINTS.admin.configs}?type=${selectedType}`, 'GET');
                             if (data.success && data.configs.length > 0) {
                                 const config = data.configs[0];
                                 editConfigTypeSpan.textContent = config.type;
@@ -579,6 +561,8 @@
                         } catch (error) {
                             showToast('error', 'Gagal memuat data konfigurasi.');
                         }
+                    } else {
+                        showToast('error', 'Silakan pilih tipe panel yang ingin diedit.');
                     }
                 });
                 
