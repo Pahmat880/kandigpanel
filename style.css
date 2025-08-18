@@ -607,3 +607,17 @@ tr:hover {
 .copy-details-button:hover {
     background-color: #218838;
 }
+
+.copy-button {
+    padding: 6px 12px;
+    background-color: var(--info-color);
+    border: none;
+    color: white;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 0.8em;
+}
+
+.copy-button:hover {
+    background-color: #1a8a9a;
+}
