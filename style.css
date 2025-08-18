@@ -179,69 +179,78 @@ input::placeholder {
     to { transform: translateY(-10px); }
 }
 
-/* Kotak Hasil */
+/* Kotak Hasil Panel */
 .result-box {
-    background-color: #e9ecef;
-    border: 1px solid #ced4da;
+    background-color: var(--input-bg);
+    border: 1px solid var(--border-color);
     border-radius: 8px;
     padding: 20px;
     margin-top: 20px;
     text-align: left;
     display: none;
     animation: fadeIn 0.5s forwards;
+    border-left: 5px solid var(--success-color);
 }
 
-.result-box p {
-    font-weight: 600;
-    margin-top: 0;
+.result-box .result-title {
+    font-weight: 700;
+    font-size: 1.2em;
+    color: var(--success-color);
     margin-bottom: 15px;
-    color: var(--primary-accent);
 }
+.result-box .result-title i { margin-right: 8px; }
 
-.result-detail {
+.result-row {
     display: flex;
-    align-items: center;
     justify-content: space-between;
+    align-items: center;
     padding: 8px 0;
-    border-top: 1px dashed #ced4da;
+    border-bottom: 1px dashed var(--border-color);
 }
 
-.result-detail:first-child {
-    border-top: none;
+.result-row:last-child {
+    border-bottom: none;
 }
 
-.result-detail span {
+.result-row span {
     font-size: 0.95em;
+    color: var(--secondary-text-color);
 }
 
-.result-detail .result-value {
+.result-row .result-value {
     font-weight: 600;
     flex-grow: 1;
     margin-left: 10px;
     word-break: break-all;
     color: var(--text-color);
+    text-align: right;
 }
 
-.copy-button, .copy-all-button {
-    background: var(--primary-accent);
-    color: #fff;
-    border: none;
-    border-radius: 6px;
-    padding: 8px 12px;
-    font-size: 0.8em;
-    cursor: pointer;
-    transition: background-color 0.2s ease;
-    white-space: nowrap;
+.result-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+}
+.result-actions button {
+    width: 100%;
+    padding: 10px;
+    font-size: 0.9em;
 }
 
-.copy-button:hover, .copy-all-button:hover {
+.copy-button {
+    background-color: var(--info-color);
+}
+.copy-button:hover {
+    background-color: #128fa1;
+}
+
+.login-panel-button {
+    background-color: var(--primary-accent);
+}
+.login-panel-button:hover {
     background-color: #0056b3;
 }
 
-.copy-all-button {
-    width: 100%;
-    margin-top: 20px;
-}
 
 /* Notifikasi Toast */
 .toast-container {
@@ -506,4 +515,95 @@ tr:hover {
 
 .secondary-button:hover {
     background-color: #5a6268 !important;
+}
+
+/* Modal Styling */
+.modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1001;
+}
+
+.modal-content {
+    background-color: var(--container-bg);
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    width: 90%;
+    max-width: 450px;
+    position: relative;
+    text-align: left;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+}
+
+.modal-header h3 {
+    margin: 0;
+    font-size: 1.5em;
+    color: var(--primary-accent);
+}
+
+.close-modal {
+    font-size: 1.5em;
+    font-weight: 300;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    color: var(--secondary-text-color);
+}
+
+.modal-body p {
+    margin-bottom: 15px;
+}
+
+.user-details {
+    background-color: var(--input-bg);
+    padding: 15px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    font-size: 0.9em;
+}
+
+.detail-item {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+    word-break: break-all;
+}
+
+.detail-item strong {
+    color: var(--text-color);
+    min-width: 100px;
+}
+
+.modal-footer {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+    border-top: 1px solid var(--border-color);
+    padding-top: 15px;
+}
+.modal-footer button {
+    flex-grow: 1;
+}
+
+.copy-details-button {
+    background-color: var(--success-color);
+}
+.copy-details-button:hover {
+    background-color: #218838;
 }
