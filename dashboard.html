@@ -140,7 +140,6 @@
                         <option value="" disabled selected>Pilih Tipe</option>
                         <option value="public">Public</option>
                         <option value="private">Private</option>
-                        <option value="admin">Admin</option>
                     </select>
                     <button id="loadConfigButton" class="submit-button small-button"><i class="fas fa-search"></i> Muat Data</button>
                 </div>
@@ -304,7 +303,6 @@
                     if (user.accountType === 'reguler') {
                         panelTypeSelect.innerHTML += `<option value="public">Public Panel</option>`;
                     } else if (user.accountType === 'premium') {
-                        panelTypeSelect.innerHTML += `<option value="public">Public Panel</option>`;
                         panelTypeSelect.innerHTML += `<option value="private">Private Panel</option>`;
                     } else if (user.accountType === 'eksklusif') {
                         panelTypeSelect.innerHTML += `<option value="public">Public Panel</option>`;
@@ -562,12 +560,11 @@
                 });
 
                 // Event listener untuk memuat konfigurasi tertentu
-                loadConfigButton.addEventListener('click', async () => {
-                    const selectedType = configTypeSelect.value;
-                    if (selectedType) {
-                        // Panggil API untuk mendapatkan konfigurasi spesifik
+                configsTableBody.addEventListener('click', async (e) => {
+                    if (e.target.closest('button')?.classList.contains('edit-config-button')) {
+                        const configType = e.target.closest('button').dataset.type;
                         try {
-                            const data = await callApi(`${API_ENDPOINTS.admin.configs}?type=${selectedType}`, 'GET');
+                            const data = await callApi(`${API_ENDPOINTS.admin.configs}?type=${configType}`, 'GET');
                             if (data.success && data.configs.length > 0) {
                                 const config = data.configs[0];
                                 editConfigTypeSpan.textContent = config.type;
@@ -585,8 +582,6 @@
                         } catch (error) {
                             showToast('error', 'Gagal memuat data konfigurasi.');
                         }
-                    } else {
-                        showToast('error', 'Silakan pilih tipe panel yang ingin diedit.');
                     }
                 });
                 
@@ -656,10 +651,16 @@
                     try {
                         const data = await callApi(API_ENDPOINTS.admin.users, 'POST', body);
                         if (data.success) {
-                            showToast('success', 'Pengguna berhasil ditambahkan!');
+                            // Tampilkan popup notifikasi
+                            document.getElementById('modalUsername').textContent = newUsername;
+                            document.getElementById('modalPassword').textContent = newPassword;
+                            document.getElementById('modalAccountType').textContent = newUserAccountType;
+                            userResultModal.classList.remove('hidden');
+                            
                             addUserFormContainer.classList.add('hidden');
                             addUserForm.reset();
                             loadUsers();
+                            showToast('success', 'Pengguna berhasil ditambahkan!');
                         } else {
                             showToast('error', data.message || 'Gagal menambahkan pengguna.');
                         }
