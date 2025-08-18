@@ -144,6 +144,7 @@
                         <option value="" disabled selected>Pilih Tipe</option>
                         <option value="public">Public</option>
                         <option value="private">Private</option>
+                        <option value="admin">Admin</option>
                     </select>
                     <button id="loadConfigButton" class="submit-button small-button"><i class="fas fa-search"></i> Muat Data</button>
                 </div>
@@ -514,12 +515,11 @@
                 });
 
                 // Event listener untuk memuat konfigurasi tertentu
-                loadConfigButton.addEventListener('click', async () => {
-                    const selectedType = configTypeSelect.value;
-                    if (selectedType) {
-                        // Panggil API untuk mendapatkan konfigurasi spesifik
+                configsTableBody.addEventListener('click', async (e) => {
+                    if (e.target.closest('button')?.classList.contains('edit-config-button')) {
+                        const configType = e.target.closest('button').dataset.type;
                         try {
-                            const data = await callApi(`${API_ENDPOINTS.admin.configs}?type=${selectedType}`, 'GET');
+                            const data = await callApi(`${API_ENDPOINTS.admin.configs}?type=${configType}`, 'GET');
                             if (data.success && data.configs.length > 0) {
                                 const config = data.configs[0];
                                 editConfigTypeSpan.textContent = config.type;
@@ -537,8 +537,6 @@
                         } catch (error) {
                             showToast('error', 'Gagal memuat data konfigurasi.');
                         }
-                    } else {
-                        showToast('error', 'Silakan pilih tipe panel yang ingin diedit.');
                     }
                 });
                 
