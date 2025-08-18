@@ -441,7 +441,6 @@
                 const addUserForm = document.getElementById('addUserForm');
                 const addUserButton = document.getElementById('addUserButton');
                 const cancelAddUserButton = document.getElementById('cancelAddUser');
-                const userResultBox = document.getElementById('userResultBox');
 
                 const configTypeSelect = document.getElementById('configTypeSelect');
                 const loadConfigButton = document.getElementById('loadConfigButton');
@@ -455,6 +454,9 @@
                 const editLocInput = document.getElementById('editLoc');
                 const cancelEditConfigButton = document.getElementById('cancelEditConfig');
 
+                // Modal
+                const userResultBox = document.getElementById('userResultBox');
+                
                 function showSection(sectionId) {
                     userManagementSection.classList.add('hidden');
                     configManagementSection.classList.add('hidden');
@@ -538,12 +540,11 @@
                 });
 
                 // Event listener untuk memuat konfigurasi tertentu
-                loadConfigButton.addEventListener('click', async () => {
-                    const selectedType = configTypeSelect.value;
-                    if (selectedType) {
-                        // Panggil API untuk mendapatkan konfigurasi spesifik
+                configsTableBody.addEventListener('click', async (e) => {
+                    if (e.target.closest('button')?.classList.contains('edit-config-button')) {
+                        const configType = e.target.closest('button').dataset.type;
                         try {
-                            const data = await callApi(`${API_ENDPOINTS.admin.configs}?type=${selectedType}`, 'GET');
+                            const data = await callApi(`${API_ENDPOINTS.admin.configs}?type=${configType}`, 'GET');
                             if (data.success && data.configs.length > 0) {
                                 const config = data.configs[0];
                                 editConfigTypeSpan.textContent = config.type;
@@ -561,8 +562,6 @@
                         } catch (error) {
                             showToast('error', 'Gagal memuat data konfigurasi.');
                         }
-                    } else {
-                        showToast('error', 'Silakan pilih tipe panel yang ingin diedit.');
                     }
                 });
                 
@@ -632,12 +631,21 @@
                     try {
                         const data = await callApi(API_ENDPOINTS.admin.users, 'POST', body);
                         if (data.success) {
-                            // Tampilkan popup notifikasi
-                            document.getElementById('modalUsername').textContent = newUsername;
-                            document.getElementById('modalPassword').textContent = newPassword;
-                            document.getElementById('modalAccountType').textContent = newUserAccountType;
-                            userResultModal.classList.remove('hidden');
-                            
+                            // UI hasil yang lebih stylish
+                            const successMessageHTML = `
+                                <div class="result-title"><i class="fas fa-user-plus"></i> Akun Pengguna Berhasil Dibuat!</div>
+                                <div class="result-row"><span>Username:</span> <span id="copyUserUsernameValue">${newUsername}</span></div>
+                                <div class="result-row"><span>Password:</span> <span id="copyUserPasswordValue">${newPassword}</span></div>
+                                <div class="result-row"><span>Tipe Akun:</span> <span id="copyUserAccountTypeValue">${newUserAccountType.toUpperCase()}</span></div>
+                                <div class="result-actions">
+                                    <button class="copy-button" data-copy-target="copyUserUsernameValue">Copy Username</button>
+                                    <button class="copy-button" data-copy-target="copyUserPasswordValue">Copy Password</button>
+                                    <button class="copy-button" data-copy-target="copyUserAccountTypeValue">Copy Akun</button>
+                                </div>
+                            `;
+                            userResultBox.innerHTML = successMessageHTML;
+                            userResultBox.style.display = 'block';
+
                             addUserFormContainer.classList.add('hidden');
                             addUserForm.reset();
                             loadUsers();
@@ -665,6 +673,23 @@
                             } catch (error) {
                                 showToast('error', 'Terjadi kesalahan jaringan.');
                             }
+                        }
+                    }
+                });
+
+                userResultBox.addEventListener('click', async (e) => {
+                    if (e.target.classList.contains('copy-button')) {
+                        const targetId = e.target.dataset.copyTarget;
+                        const textToCopy = document.getElementById(targetId).textContent;
+                        try {
+                            await navigator.clipboard.writeText(textToCopy);
+                            showToast('info', `Berhasil disalin: ${textToCopy.substring(0, Math.min(25, textToCopy.length))}...`);
+                            e.target.textContent = 'Disalin!';
+                            setTimeout(() => {
+                                e.target.textContent = `Copy ${targetId.replace('copyUser', '').replace('Value', '')}`;
+                            }, 1500);
+                        } catch (err) {
+                            showToast('error', 'Gagal menyalin!');
                         }
                     }
                 });
