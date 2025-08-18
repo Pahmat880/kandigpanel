@@ -32,7 +32,7 @@ export default async function handler(req, res) {
     }
 
     const payload = {
-      id: user.accountId, // Token sekarang berisi accountId
+      id: user.accountId,
       username: user.username,
       role: user.role,
       accountType: user.accountType
