@@ -140,6 +140,7 @@
                         <option value="" disabled selected>Pilih Tipe</option>
                         <option value="public">Public</option>
                         <option value="private">Private</option>
+                        <option value="admin">Admin</option>
                     </select>
                     <button id="loadConfigButton" class="submit-button small-button"><i class="fas fa-search"></i> Muat Data</button>
                 </div>
@@ -477,6 +478,30 @@
                 const editNestIdInput = document.getElementById('editNestId');
                 const editLocInput = document.getElementById('editLoc');
                 const cancelEditConfigButton = document.getElementById('cancelEditConfig');
+
+                // Modal
+                const userResultModal = document.getElementById('userResultModal');
+                const closeModalButtons = document.querySelectorAll('.close-modal');
+                const copyDetailsButton = document.querySelector('.copy-details-button');
+
+                closeModalButtons.forEach(button => {
+                    button.addEventListener('click', () => {
+                        userResultModal.classList.add('hidden');
+                    });
+                });
+                copyDetailsButton.addEventListener('click', async () => {
+                    const modalUsername = document.getElementById('modalUsername').textContent;
+                    const modalPassword = document.getElementById('modalPassword').textContent;
+                    const modalAccountType = document.getElementById('modalAccountType').textContent;
+                    const textToCopy = `Username: ${modalUsername}\nPassword: ${modalPassword}\nAccount Type: ${modalAccountType}`;
+                    try {
+                        await navigator.clipboard.writeText(textToCopy);
+                        showToast('info', 'Detail akun berhasil disalin!');
+                    } catch (err) {
+                        showToast('error', 'Gagal menyalin detail akun!');
+                    }
+                });
+
 
                 function showSection(sectionId) {
                     userManagementSection.classList.add('hidden');
