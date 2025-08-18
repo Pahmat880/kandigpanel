@@ -68,7 +68,7 @@ export default async function handler(req, res) {
       console.log("Log 3: Connected to database.");
 
       const userAccountType = req.user.accountType;
-      // Logika validasi peran
+      // Perbaiki logika validasi peran
       if (userAccountType === 'reguler' && panelType !== 'public') {
         return res.status(403).json({ status: false, message: 'Akun reguler hanya diizinkan membuat panel public.' });
       }
@@ -115,8 +115,8 @@ export default async function handler(req, res) {
 
       if (apiResponse.ok && apiData.status) {
         await userPanelsCollection.insertOne({
-          accountId: req.user.id, // Menyimpan accountId pengguna
-          idServer: apiData.result.id_server.toString(), 
+          accountId: req.user.id,
+          idServer: apiData.result.id_server.toString(),
           idUser: apiData.result.id_user,
           username: apiData.result.username,
           domain: apiData.result.domain,
