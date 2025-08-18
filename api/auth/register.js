@@ -1,7 +1,7 @@
 // api/auth/register.js
 import { connectToDatabase } from '../../utils/db.js';
 import bcrypt from 'bcryptjs';
-import { v4 as uuidv4 } from 'uuid'; // Impor library UUID
+import { v4 as uuidv4 } from 'uuid';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -18,8 +18,8 @@ export default async function handler(req, res) {
       return res.status(400).json({ success: false, message: 'Invalid role.' });
   }
 
-  const validAccountTypes = ['reguler', 'premium', 'eksklusif', 'admin'];
-  if (!validAccountTypes.includes(accountType)) {
+  const validAccountTypes = ['reguler', 'premium', 'eksklusif'];
+  if (!validAccountTypes.includes(accountType) && accountType !== 'admin') {
       return res.status(400).json({ success: false, message: 'Invalid account type.' });
   }
   
@@ -47,14 +47,14 @@ export default async function handler(req, res) {
       password: hashedPassword,
       role,
       accountType,
-      accountId: uuidv4(), // Buat accountId baru yang unik
+      accountId: uuidv4(),
       createdAt: new Date(),
       lastLogin: null
     };
 
     await usersCollection.insertOne(newUser);
     
-    res.status(201).json({ success: true, message: 'User created successfully.' });
+    res.status(201).json({ success: true, message: 'User created successfully.', userDetails: { username: newUser.username, password: password, accountType: newUser.accountType } });
 
   } catch (error) {
     console.error('Registration error:', error);
