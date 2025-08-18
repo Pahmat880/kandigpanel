@@ -2,7 +2,6 @@
 
 import { connectToDatabase } from '../utils/db.js';
 import jwt from 'jsonwebtoken';
-import { ObjectId } from 'mongodb';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your_very_secure_secret_key';
 
@@ -34,12 +33,10 @@ export default async function handler(req, res) {
             const userPanelsCollection = db.collection('userPanels');
 
             let panels;
-            // Admin bisa melihat semua panel, user hanya bisa melihat panelnya sendiri
             if (req.user.role === 'admin') {
                 panels = await userPanelsCollection.find({}).toArray();
             } else {
-                // Mencocokkan userId sebagai string
-                panels = await userPanelsCollection.find({ userId: req.user.id }).toArray();
+                panels = await userPanelsCollection.find({ accountId: req.user.id }).toArray();
             }
             
             return res.status(200).json({ success: true, panels });
