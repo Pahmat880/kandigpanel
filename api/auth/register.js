@@ -1,6 +1,7 @@
 // api/auth/register.js
 import { connectToDatabase } from '../../utils/db.js';
 import bcrypt from 'bcryptjs';
+import { v4 as uuidv4 } from 'uuid'; // Impor library UUID
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -17,8 +18,8 @@ export default async function handler(req, res) {
       return res.status(400).json({ success: false, message: 'Invalid role.' });
   }
 
-  const validAccountTypes = ['reguler', 'premium', 'eksklusif'];
-  if (!validAccountTypes.includes(accountType) && accountType !== 'admin') {
+  const validAccountTypes = ['reguler', 'premium', 'eksklusif', 'admin'];
+  if (!validAccountTypes.includes(accountType)) {
       return res.status(400).json({ success: false, message: 'Invalid account type.' });
   }
   
@@ -46,6 +47,7 @@ export default async function handler(req, res) {
       password: hashedPassword,
       role,
       accountType,
+      accountId: uuidv4(), // Buat accountId baru yang unik
       createdAt: new Date(),
       lastLogin: null
     };
