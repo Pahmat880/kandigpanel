@@ -47,11 +47,7 @@
                 </form>
                 
                 <div class="result-box" id="resultBox" style="display: none;">
-                    <p><strong>Panel Berhasil Dibuat!</strong></p>
-                    <div class="result-detail"><span>Username:</span> <span id="resultUsername" class="result-value"></span></div>
-                    <div class="result-detail"><span>Password:</span> <span id="resultPassword" class="result-value"></span></div>
-                    <div class="result-detail"><span>Domain:</span> <span id="resultDomain" class="result-value"></span></div>
-                </div>
+                    </div>
             </section>
 
             <hr class="divider">
@@ -315,12 +311,22 @@
                         const data = await response.json();
 
                         if (response.ok && data.status) {
-                            resultBox.innerHTML = `
-                                <p><strong>Panel Berhasil Dibuat!</strong></p>
-                                <div class="result-detail"><span>Username:</span> <span id="resultUsername" class="result-value">${data.result.username}</span></div>
-                                <div class="result-detail"><span>Password:</span> <span id="resultPassword" class="result-value">${data.result.password}</span></div>
-                                <div class="result-detail"><span>Domain:</span> <span id="resultDomain" class="result-value">${data.result.domain}</span></div>
+                            // UI hasil yang lebih stylish
+                            const successMessageHTML = `
+                                <div class="result-title"><i class="fas fa-check-circle"></i> Panel Berhasil Dibuat!</div>
+                                <div class="result-row"><span>Username:</span> <span id="copyUsernameValue">${data.result.username}</span></div>
+                                <div class="result-row"><span>Password:</span> <span id="copyPasswordValue">${data.result.password}</span></div>
+                                <div class="result-row"><span>Paket:</span> <span>${selectedPackage.name}</span></div>
+                                <div class="result-row"><span>Tipe Panel:</span> <span>${panelType.toUpperCase()}</span></div>
+                                <div class="result-row"><span>Domain:</span> <span id="copyDomainValue"><a href="${data.result.domain}" target="_blank">${data.result.domain}</a></span></div>
+                                <div class="result-actions">
+                                    <button class="copy-button" data-copy-target="copyUsernameValue">Copy Username</button>
+                                    <button class="copy-button" data-copy-target="copyPasswordValue">Copy Password</button>
+                                    <button class="copy-button" data-copy-target="copyDomainValue">Copy Domain</button>
+                                    <button class="login-panel-button" onclick="window.open('${data.result.domain}', '_blank')">Login Panel</button>
+                                </div>
                             `;
+                            resultBox.innerHTML = successMessageHTML;
                             resultBox.style.display = 'block';
                             showToast('success', 'Panel berhasil dibuat!');
                         } else {
@@ -334,6 +340,20 @@
                     } finally {
                         submitButton.disabled = false;
                         buttonText.textContent = 'Buat Panel';
+                    }
+                });
+                
+                // Event listener untuk tombol copy (menangani copy secara dinamis)
+                resultBox.addEventListener('click', async (e) => {
+                    if (e.target.classList.contains('copy-button')) {
+                        const targetId = e.target.dataset.copyTarget;
+                        const textToCopy = document.getElementById(targetId).textContent;
+                        try {
+                            await navigator.clipboard.writeText(textToCopy);
+                            showToast('info', 'Berhasil disalin!');
+                        } catch (err) {
+                            showToast('error', 'Gagal menyalin!');
+                        }
                     }
                 });
 
@@ -515,11 +535,12 @@
                 });
 
                 // Event listener untuk memuat konfigurasi tertentu
-                configsTableBody.addEventListener('click', async (e) => {
-                    if (e.target.closest('button')?.classList.contains('edit-config-button')) {
-                        const configType = e.target.closest('button').dataset.type;
+                loadConfigButton.addEventListener('click', async () => {
+                    const selectedType = configTypeSelect.value;
+                    if (selectedType) {
+                        // Panggil API untuk mendapatkan konfigurasi spesifik
                         try {
-                            const data = await callApi(`${API_ENDPOINTS.admin.configs}?type=${configType}`, 'GET');
+                            const data = await callApi(`${API_ENDPOINTS.admin.configs}?type=${selectedType}`, 'GET');
                             if (data.success && data.configs.length > 0) {
                                 const config = data.configs[0];
                                 editConfigTypeSpan.textContent = config.type;
@@ -537,6 +558,8 @@
                         } catch (error) {
                             showToast('error', 'Gagal memuat data konfigurasi.');
                         }
+                    } else {
+                        showToast('error', 'Silakan pilih tipe panel yang ingin diedit.');
                     }
                 });
                 
