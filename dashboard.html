@@ -483,7 +483,7 @@
                 const userResultModal = document.getElementById('userResultModal');
                 const closeModalButtons = document.querySelectorAll('.close-modal');
                 const copyDetailsButton = document.querySelector('.copy-details-button');
-                
+
                 closeModalButtons.forEach(button => {
                     button.addEventListener('click', () => {
                         userResultModal.classList.add('hidden');
@@ -501,6 +501,7 @@
                         showToast('error', 'Gagal menyalin detail akun!');
                     }
                 });
+
 
                 function showSection(sectionId) {
                     userManagementSection.classList.add('hidden');
