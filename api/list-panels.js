@@ -36,6 +36,7 @@ export default async function handler(req, res) {
             if (req.user.role === 'admin') {
                 panels = await userPanelsCollection.find({}).toArray();
             } else {
+                // Filter panel berdasarkan accountId yang didapat dari token JWT
                 panels = await userPanelsCollection.find({ accountId: req.user.id }).toArray();
             }
             
